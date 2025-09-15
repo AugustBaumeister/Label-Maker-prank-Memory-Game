@@ -1,0 +1,84 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+#include <ezButton.h>
+
+
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+ezButton button1(14);
+const int joystickXPin = A2;
+const int joystickYPin = A1;
+const int joystickThreshold = 200;
+
+
+String directions[] = {"UP", "DOWN", "LEFT", "RIGHT"};
+int sequence[10];
+int level = 1;
+bool gameOver = false;
+
+void setup() {
+  lcd.init();
+  lcd.backlight();
+  button1.setDebounceTime(50);
+  randomSeed(analogRead(0)); 
+  lcd.setCursor(0, 0);
+  lcd.print("MEMORY GAME");
+  delay(1500);
+  lcd.clear();
+}
+void loop() {
+  if (gameOver) return;
+
+  
+  sequence[level - 1] = random(0, 4);
+
+  
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Level ");
+  lcd.print(level);
+  delay(1000);
+
+  for (int i = 0; i < level; i++) {
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print(directions[sequence[i]]);
+    delay(1000);
+    lcd.clear();
+    delay(300);
+  }
+
+  
+  for (int i = 0; i < level; i++) {
+    int input = getJoystickDirection();
+    if (input != sequence[i]) {
+      lcd.clear();
+      lcd.setCursor(0, 0);
+lcd.print("GAME OVER");
+      gameOver = true;
+      return;
+    }
+  }
+
+  
+  if (level == 10) {
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("YOU WIN!");
+    gameOver = true;
+    return;
+  }
+
+  level++;
+  delay(1000);
+}
+
+int getJoystickDirection() {
+  while (true) {
+    int x = analogRead(joystickXPin);
+    int y = analogRead(joystickYPin);
+    if (y < (512 - joystickThreshold)) return 0; 
+    if (y > (512 + joystickThreshold)) return 1; 
+    if (x < (512 - joystickThreshold)) return 2; 
+    if (x > (512 + joystickThreshold)) return 3; 
+  }
+}
